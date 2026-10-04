@@ -1,0 +1,228 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#130f2d">
+  <meta name="description" content="一场可以亲手闯关、拆礼物、做蛋糕和吹蜡烛的生日小冒险。">
+  <title>生日快乐｜闯关拆礼物</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🎂</text></svg>">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <canvas id="confettiCanvas" aria-hidden="true"></canvas>
+  <audio id="backgroundMusic" loop preload="auto"></audio>
+  <div class="ambient-orb orb-one" aria-hidden="true"></div>
+  <div class="ambient-orb orb-two" aria-hidden="true"></div>
+
+  <header class="topbar" id="topbar">
+    <button class="brand-button" id="brandButton" type="button" aria-label="回到开始页面">
+      <span class="brand-mark">♡</span>
+      <span class="brand-copy"><strong data-text="brandTitle">Birthday Run</strong><small data-text="brandSubtitle">跑一跑，拆一拆，开心一下</small></span>
+    </button>
+
+    <button class="icon-button sound-button" id="soundButton" type="button" aria-label="播放或暂停背景音乐" aria-pressed="true">
+      <span id="soundIcon">♫</span>
+    </button>
+  </header>
+
+  <main id="app">
+    <section class="scene scene-landing is-active" id="landingScene" aria-labelledby="landingTitle">
+      <div class="calendar-overlay" id="calendarOverlay">
+        <div class="calendar-card">
+          <p class="eyebrow"><span></span><span class="eyebrow-text" data-text="calendarEyebrow">SAVE THE DATE</span></p>
+          <h2 id="calendarTitle">在日历上找到十月五号</h2>
+          <p id="calendarPrompt">点中那一天，看看会发生什么。</p>
+          <div class="birthday-calendar">
+            <div class="calendar-head"><b id="calendarMonth">2026 · 十月</b></div>
+            <div class="calendar-weekdays"><span>一</span><span>二</span><span>三</span><span>四</span><span>五</span><span>六</span><span>日</span></div>
+            <div class="calendar-days" id="calendarDays" aria-label="十月日历"></div>
+          </div>
+          <p class="calendar-message" id="calendarMessage" hidden>日期锁定成功，庆祝程序启动！</p>
+          <div class="birthday-fireworks" id="fireworksStage" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
+          <div class="birthday-reveal" id="birthdayReveal">
+            <span>祝你</span>
+            <h2>十九岁生日快乐</h2>
+          </div>
+          <button class="primary-button compact" id="calendarContinueButton" type="button" hidden><span>开始生日冒险</span><b>→</b></button>
+        </div>
+      </div>
+      <div class="landing-grid">
+        <div class="hero-copy">
+          <p class="eyebrow"><span></span><span class="eyebrow-text" data-text="landingEyebrow">HAPPY BIRTHDAY RUN</span></p>
+          <h1 id="landingTitle"><span id="heroTitle">Happy Birthday</span><em id="heroName">亲爱的你</em></h1>
+          <p class="hero-subtitle" id="heroSubtitle"></p>
+          <div class="hero-actions">
+            <button class="primary-button" id="startButton" type="button"><span>开始生日冒险</span><b>→</b></button>
+            <p class="tiny-note"><kbd>↑</kbd><kbd>↓</kbd> <span data-text="landingControls">移动，躲开障碍去拆礼物</span></p>
+          </div>
+        </div>
+        <div class="hero-visual" aria-hidden="true">
+          <div class="hero-stars">✦ <i>·</i> ✧ <i>·</i> ✦</div>
+          <div class="balloon balloon-one"><span></span></div>
+          <div class="balloon balloon-two"><span></span></div>
+          <div class="balloon balloon-three"><span></span></div>
+          <div class="game-preview">
+            <div class="preview-sky"><i></i><i></i><i></i></div>
+            <div class="preview-path"></div>
+            <div class="preview-gate gate-a"></div>
+            <div class="preview-gate gate-b"></div>
+            <div class="preview-runner"><span class="runner-head"></span><span class="runner-body"></span></div>
+            <div class="preview-gift">🎁</div>
+          </div>
+          <div class="hero-caption"><span data-text="heroCaptionText">好多份礼物等你抵达</span></div>
+        </div>
+      </div>
+      <div class="landing-footer"><span data-text="landingFooterLeft">键盘、滑动或点按都可以控制</span><span data-text="landingFooterRight">撞到障碍也可以继续</span></div>
+    </section>
+    <section class="scene scene-game" id="gameScene" aria-label="生日闯关游戏">
+      <div class="game-frame">
+        <canvas id="gameCanvas" role="img" aria-label="控制小人在星光道路上下移动，穿过障碍物"></canvas>
+        <div class="game-vignette" aria-hidden="true"></div>
+
+        <div class="game-hud">
+          <div class="hud-progress-wrap">
+            <div class="hud-label"><span id="stageLabel">星光花园</span><b id="progressLabel">0%</b></div>
+            <div class="progress-track"><i id="progressFill"></i><span class="progress-spark" id="progressSpark">✦</span></div>
+            <div class="reward-rail" id="rewardRail" aria-label="礼物收集进度"></div>
+            <div class="fragment-hud" aria-label="星星碎片收集进度"><span data-text="fragmentLabel">星星碎片</span><b id="fragmentStars">☆☆☆</b></div>
+          </div>
+          <div class="hud-status">
+            <span class="heart-counter" id="heartCounter" aria-label="剩余勇气">♥♥♥</span>
+            <button class="hud-button face-button" id="faceButton" type="button" title="上传一张图片作为小人的脸" data-text="faceButton">换脸</button>
+            <input id="faceUpload" type="file" accept="image/*" hidden>
+            <button class="hud-button" id="gameRestartButton" type="button" data-text="restartButton">重来</button>
+          </div>
+        </div>
+
+        <div class="game-intro" id="gameIntro">
+          <p data-text="gameIntroTitle">礼物正在前面的星路上等你</p>
+          <strong id="countdownText">准备...</strong>
+          <span data-text="gameIntroHelp">上下移动，碰到障碍也能继续</span>
+        </div>
+
+        <div class="control-hint" id="controlHint"><kbd>↑</kbd><kbd>↓</kbd><span data-text="controlHint">或滑动控制</span></div>
+
+        <div class="touch-controls" aria-label="游戏控制">
+          <button type="button" data-move="up" aria-label="向上移动">↑</button>
+          <button type="button" data-move="down" aria-label="向下移动">↓</button>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" id="rewardModal" aria-hidden="true">
+        <div class="reward-card" id="rewardCard" role="dialog" aria-modal="true" aria-labelledby="rewardTitle">
+          <div class="reward-rays" aria-hidden="true"></div>
+          <span class="reward-badge" id="rewardBadge">礼物 01</span>
+          <div class="gift-interaction" id="giftInteraction">
+            <div class="open-gift" id="giftHitArea" aria-hidden="true"><span class="gift-lid"></span><span class="gift-box"></span><b id="rewardIcon">🎁</b></div>
+            <p class="gift-action-status" id="giftActionStatus">先动动手，把礼物盒打开。</p>
+            <button class="secondary-button compact" id="giftActionButton" type="button">拉一下丝带</button>
+          </div>
+          <div class="reward-reveal" id="rewardReveal" hidden>
+            <h2 id="rewardTitle">第一份礼物</h2>
+            <p id="rewardDescription"></p>
+            <small id="rewardNote"></small>
+            <button class="primary-button compact" id="continueRewardButton" type="button"><span data-text="rewardContinue">收下，继续前进</span><b>→</b></button>
+          </div>
+        </div>
+      </div>
+
+      <div class="modal-backdrop" id="finishModal" aria-hidden="true">
+        <div class="finish-card" role="dialog" aria-modal="true" aria-labelledby="finishTitle">
+          <span class="finish-spark">✦</span>
+          <p class="eyebrow"><span></span><span class="eyebrow-text" data-text="finishEyebrow">ALL GIFTS COLLECTED</span></p>
+          <h2 id="finishTitle" data-text="finishTitle">三关跑完，今天状态不错</h2>
+          <p data-text="finishText">三份礼物都收好了。下一站是蛋糕工坊，先去挑颜色和装饰。</p>
+          <div class="finish-gifts"><span>🎁</span><span>🎟️</span><span>✦</span></div>
+          <button class="primary-button compact" id="goCakeButton" type="button"><span data-text="goCake">去蛋糕工坊</span><b>→</b></button>
+        </div>
+      </div>
+    </section>
+    <section class="scene scene-cake" id="cakeScene" aria-labelledby="cakeTitle">
+      <div class="cake-layout">
+        <div class="cake-copy">
+          <p class="eyebrow"><span></span><span class="eyebrow-text" data-text="cakeEyebrow">CAKE WORKSHOP</span></p>
+          <h2 id="cakeTitle"></h2>
+          <p id="cakeSubtitle"></p>
+          <blockquote id="wishShort"></blockquote>
+
+          <div class="cake-designer" id="cakeDesigner">
+            <div class="designer-group">
+              <span data-text="cakeFlavorLabel">奶油颜色</span>
+              <div class="design-options">
+                <button type="button" data-cake-flavor="berry" data-text="cakeFlavorBerry">莓果粉</button>
+                <button type="button" data-cake-flavor="sunny" data-text="cakeFlavorSunny">阳光橙</button>
+                <button type="button" data-cake-flavor="mint" data-text="cakeFlavorMint">薄荷绿</button>
+              </div>
+            </div>
+            <div class="designer-group">
+              <span data-text="cakeToppingLabel">顶部装饰</span>
+              <div class="design-options">
+                <button type="button" data-cake-topping="berry" data-text="cakeToppingBerry">草莓</button>
+                <button type="button" data-cake-topping="star" data-text="cakeToppingStar">星星</button>
+                <button type="button" data-cake-topping="flag" data-text="cakeToppingFlag">小旗</button>
+              </div>
+            </div>
+            <div class="designer-group">
+              <span data-text="cakeCandleLabel">蜡烛数量</span>
+              <div class="design-options">
+                <button type="button" data-candle-count="3">3 根</button>
+                <button type="button" data-candle-count="5">5 根</button>
+              </div>
+            </div>
+            <button class="primary-button compact designer-confirm" id="confirmCakeButton" type="button"><span data-text="confirmCake">就选这个，准备吹蜡烛</span><b>✓</b></button>
+          </div>
+
+          <div class="blow-panel is-locked" id="blowPanel">
+            <div class="blow-meter" aria-label="吹蜡烛进度"><i id="blowMeterFill"></i></div>
+            <p class="blow-status" id="blowStatus">先完成上面的蛋糕选择</p>
+            <div class="cake-actions">
+              <button class="primary-button compact" id="micButton" type="button"><span data-text="micButton">允许麦克风，真的吹气</span><b>◎</b></button>
+              <button class="secondary-button" id="blowButton" type="button" data-text="blowButton">用魔法吹一下</button>
+            </div>
+          </div>
+        </div>
+        <div class="cake-stage">
+          <div class="cake-glow" aria-hidden="true"></div>
+          <div class="cake-illustration flavor-berry topping-berry" id="cakeIllustration">
+            <div class="candle-row" id="candleRow" aria-label="生日蜡烛"></div>
+            <div class="cake-top">
+              <span class="cherry c1"></span><span class="cherry c2"></span><span class="cherry c3"></span><span class="cherry c4"></span>
+            </div>
+            <div class="cake-layer layer-top"><i></i><i></i><i></i><i></i></div>
+            <div class="cake-layer layer-middle"></div>
+            <div class="cake-layer layer-bottom"></div>
+            <div class="cake-plate"></div>
+          </div>
+          <div class="cake-celebration" id="cakeCelebration">
+            <strong data-text="cakeDone">蜡烛全部吹灭，快乐额度 +100</strong>
+            <button class="primary-button compact" id="goLetterButton" type="button"><span data-text="goLetter">看手写祝福</span><b>→</b></button>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="scene scene-letter video-scene" id="letterScene" aria-label="生日祝福视频">
+      <div class="letter-layout video-letter-layout">
+        <div class="letter-video-stage">
+          <video class="letter-video-final" id="letterVideo" controls autoplay playsinline preload="auto" src="./20251005.mp4"></video>
+        </div>
+
+        <div class="final-reveal is-visible" id="finalReveal">
+          <div class="final-reveal-card is-visible" id="finalRevealCard">
+            <span class="final-gift-icon">🎁</span>
+            <h3 id="finalGiftTitle">还有礼物在路上</h3>
+            <p id="finalGiftText">剩下的神秘礼物正在慢慢抵达。</p>
+            <a id="finalGiftLink" class="primary-button compact" href="#" target="_blank" rel="noreferrer" hidden><span>打开彩蛋</span><b>↗</b></a>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="config.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
